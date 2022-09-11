@@ -251,6 +251,12 @@ func do()  {
 			}
 			for _, e := range adlog.Data {
 				domain := e.Question.Name
+				//dnsServer.Prepare: preparing upstream settings: parsing upstream config: bad domain name "upload_data.qq.com": bad domain name label "upload_data": bad domain name label rune '_'
+				underscore := strings.Index(domain, "_")
+				if underscore != -1 {
+					log.Printf(" there is a underscore in %s, skipping it", domain)
+					continue
+				}
 				if !hasDomain(domain) {
 					if ipstr, err := lookup(domain); err == nil {
 						ip := net.ParseIP(ipstr)
