@@ -28,7 +28,7 @@ var (
 	homeDir string
 	resolver doh.Resolver
 	config Config
-    tree map[byte] *node = make(map[byte] *node)
+    Tree map[byte] *node = make(map[byte] *node)
     domainFile = "list.txt"
     mmdbFile = "GeoLite2-Country.mmdb"
     domainFilePtr *os.File
@@ -108,6 +108,7 @@ func myInit()  {
 		log.Fatal(err)
 	}
 	rd := bufio.NewReader(domainFilePtr)
+
 	for {
 		line, err := rd.ReadString('\n')
 		if err != nil || err == io.EOF {
@@ -176,14 +177,14 @@ func hasDomain(domain string) (has bool) {
 	var ok bool = false
 	has = true
 	for _, b := range bytes {
-		if (preNode == nil) {
-			preNode, ok = tree[b]
+		if preNode == nil {
+			preNode, ok = Tree[b]
 			if !ok {
 				preNode = &node{
 					end:  false,
 					folw: make(map[byte] *node),
 				}
-				tree[b] = preNode
+				Tree[b] = preNode
 				has = false
 			}
 		} else {
@@ -200,8 +201,11 @@ func hasDomain(domain string) (has bool) {
 		}
 
 	}
-	if (preNode != nil) {
-		preNode.end = true
+	if preNode != nil {
+		if !preNode.end {
+			preNode.end = true
+			has = false
+		}
 	}
 	return
 }
@@ -210,7 +214,7 @@ func OpenFile(filename string) (*os.File, error) {
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		return os.Create(filename)
 	}
-	return os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	return os.OpenFile(filename, os.O_APPEND|os.O_RDWR, os.ModePerm)
 }
 
 func do()  {
@@ -283,6 +287,9 @@ func main() {
 
 	myInit()
 	go do()
+	//has := hasDomain("g.alicdn.com")
+	////has := hasDomain("m.aty.sohu.com")
+	//log.Printf("%v", has)
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
@@ -302,4 +309,5 @@ func main() {
 		}
 
 	}
+
 }
