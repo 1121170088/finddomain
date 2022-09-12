@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"flag"
-	"fmt"
 	"github.com/babolivier/go-doh-client"
 	"github.com/oschwald/geoip2-golang"
 	"gopkg.in/yaml.v3"
@@ -19,7 +18,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"syscall"
 	"time"
 )
@@ -41,7 +39,6 @@ type Config struct {
 	AdguardHome string           `yaml:"adguard-home"`
 	Authorization string          `yaml:"authorization"`
 	StartQueryTime string        `yaml:"start-query-time"`
-	DomainFormat string           `yaml:"domain-format"`
 	Codes       []string           `yaml:"codes"`
 
 }
@@ -115,18 +112,18 @@ func myInit()  {
 		if err != nil || err == io.EOF {
 			break
 		}
-		firstSlash := strings.Index(line, "/")
-		if firstSlash == -1 {
-			continue
-		}
-		firstSlash += 1
-		secondSlash := strings.Index(line[firstSlash:], "/")
-		if secondSlash == -1 {
-			continue
-		}
+		//firstSlash := strings.Index(line, "/")
+		//if firstSlash == -1 {
+		//	continue
+		//}
+		//firstSlash += 1
+		//secondSlash := strings.Index(line[firstSlash:], "/")
+		//if secondSlash == -1 {
+		//	continue
+		//}
 
-		domain := line[firstSlash: firstSlash + secondSlash]
-		hasDomain(domain)
+		//domain := line[firstSlash: firstSlash + secondSlash]
+		hasDomain(line)
 	}
 
 	mmdbFilePtr, err = geoip2.Open(mmdbFile)
@@ -269,9 +266,7 @@ func do()  {
 								}
 							}
 							if contain {
-								str := fmt.Sprintf(config.DomainFormat, domain)
-								log.Printf(str)
-								if _, err := io.WriteString(domainFilePtr, str); err != nil {
+								if _, err := io.WriteString(domainFilePtr, domain +"\n"); err != nil {
 									log.Fatal(err.Error())
 								}
 							}
