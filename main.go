@@ -18,6 +18,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"syscall"
 	"time"
@@ -251,10 +252,8 @@ func do()  {
 			}
 			for _, e := range adlog.Data {
 				domain := e.Question.Name
-				//dnsServer.Prepare: preparing upstream settings: parsing upstream config: bad domain name "upload_data.qq.com": bad domain name label "upload_data": bad domain name label rune '_'
-				underscore := strings.Index(domain, "_")
-				if underscore != -1 {
-					log.Printf(" there is a underscore in %s, skipping it", domain)
+				if !isDomain(domain){
+					log.Printf(" %s is not a domain, skipping it", domain)
 					continue
 				}
 				if !hasDomain(domain) {
@@ -289,13 +288,17 @@ func do()  {
 	}
 
 }
+
+func isDomain(domain string) bool  {
+	match1, _ := regexp.Match(`^[A-Za-z0-9-.]{1,63}$`, []byte(domain))
+	match2, _ := regexp.Match(`[A-Za-z0-9-.]{1,63}\.[A-Za-z0-9-.]{1,63}`, []byte(domain))
+	return  match1 && match2 && []byte(domain)[0] != '-'
+
+}
 func main() {
 
 	myInit()
 	go do()
-	//has := hasDomain("g.alicdn.com")
-	////has := hasDomain("m.aty.sohu.com")
-	//log.Printf("%v", has)
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
