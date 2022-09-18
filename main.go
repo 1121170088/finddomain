@@ -10,6 +10,7 @@ import (
 	"github.com/oschwald/geoip2-golang"
 	"gopkg.in/yaml.v3"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -20,6 +21,7 @@ import (
 	"regexp"
 	"syscall"
 	"time"
+	cidranger "github.com/yl2chen/cidranger"
 )
 
 var (
@@ -32,6 +34,8 @@ var (
     mmdbFile = "GeoLite2-Country.mmdb"
     domainFilePtr *os.File
     mmdbFilePtr *geoip2.Reader
+	ranger cidranger.Ranger
+
 )
 
 type Config struct {
@@ -40,6 +44,7 @@ type Config struct {
 	Authorization string          `yaml:"authorization"`
 	StartQueryTime string        `yaml:"start-query-time"`
 	Codes       []string           `yaml:"codes"`
+	CustomIpList string           `yaml:"custom-ip-list"`
 
 }
 type Question struct {
@@ -58,6 +63,10 @@ type node struct{
 	folw map[byte] *node
 }
 
+type payload struct {
+	Payload     []string  `yaml:"payload"`
+}
+
 func init() {
 	flag.StringVar(&homeDir, "d", "./", "set configuration directory")
 	flag.Parse()
@@ -69,6 +78,7 @@ func myInit()  {
 		AdguardHome: "",
 		Authorization: "xx:xx",
 		StartQueryTime: "2022-09-01T00:00:00+08:00",
+		CustomIpList: "",
 
 	}
 	configFile := filepath.Join(homeDir, configfile)
@@ -130,6 +140,37 @@ func myInit()  {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	ranger = cidranger.NewPCTrieRanger()
+	if config.CustomIpList != "" {
+		str, err := httpGet(config.CustomIpList)
+		if err != nil {
+			log.Printf(err.Error())
+		}
+		rawCfg := &payload{}
+		if err := yaml.Unmarshal([]byte(str), rawCfg); err != nil {
+			log.Printf(err.Error())
+		}
+		for _ , ele := range rawCfg.Payload {
+			_, network2, _ := net.ParseCIDR(ele)
+			ranger.Insert(cidranger.NewBasicRangerEntry(*network2))
+		}
+		log.Printf("%s loaded %d lines", "customip", len(rawCfg.Payload))
+	}
+
+}
+
+func httpGet(url string) (string, error) {
+	response, err := http.Get(url)
+	if err != nil {
+		log.Printf("get error")
+	}
+	defer response.Body.Close()
+	body, err2 := ioutil.ReadAll(response.Body)
+	if err2 != nil {
+		log.Printf("ioutil read error")
+	}
+	return string(body), err
 }
 
 func lookup(domain string) (ip string, err error)  {
@@ -256,26 +297,36 @@ func do()  {
 				if !hasDomain(domain) {
 					if ipstr, err := lookup(domain); err == nil {
 						ip := net.ParseIP(ipstr)
-						if country, err := mmdbFilePtr.Country(ip); err == nil {
+
+						var contain = false
+						if contains, _ := ranger.Contains(ip); contains {
+							log.Printf("%s 's ip matches custom ip list", domain)
+							contain = true
+						} else if country, err := mmdbFilePtr.Country(ip); err == nil {
 							code := country.Country.IsoCode
-							var contain = false
 							for _, c := range config.Codes {
 								if c == code {
+									log.Printf("%s 's ip in codes list", domain)
 									contain = true
 									break
 								}
 							}
-							if contain {
-								if _, err := io.WriteString(domainFilePtr, domain +"\n"); err != nil {
-									log.Fatal(err.Error())
-								}
+						}
+						if contain {
+							if _, err := io.WriteString(domainFilePtr, domain +"\n"); err != nil {
+								log.Fatal(err.Error())
 							}
 
 						} else {
-							log.Fatal(err)
+							log.Printf("%s 's ip not in codes list or custom ip list", domain)
 						}
+
+					} else {
+						log.Printf("%s dosn't have ip", domain)
 					}
 
+				} else  {
+					log.Printf("%s has cached", domain)
 				}
 			}
 			config.StartQueryTime = ooldest
