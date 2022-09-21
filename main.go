@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"syscall"
@@ -119,6 +120,9 @@ func myInit()  {
 		if err != nil || err == io.EOF {
 			break
 		}
+		line = strings.Trim(line, "\n")
+		line = strings.Trim(line, "\r")
+		line = strings.Trim(line, " ")
 		hasDomain(line)
 	}
 
@@ -151,8 +155,16 @@ func querylog(oldest, limit string) (adlog *Adlog, err error) {
 	return adlog, nil
 }
 
+func reverse(s interface{}) {
+	n := reflect.ValueOf(s).Len()
+	swap := reflect.Swapper(s)
+	for i, j := 0, n-1; i < j; i, j = i+1, j-1 {
+		swap(i, j)
+	}
+}
 func hasDomain(domain string) (has bool) {
 	bytes := []byte(domain)
+	reverse(bytes)
 	var preNode *node = nil
 	var ok bool = false
 	has = true
