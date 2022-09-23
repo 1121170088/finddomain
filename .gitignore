@@ -7,7 +7,7 @@
 *.yaml
 *.txt
 bin/*
-
+finddomain
 # Test binary, build with `go test -c`
 *.test
 
