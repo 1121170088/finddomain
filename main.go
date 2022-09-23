@@ -21,7 +21,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-	"github.com/1121170088/find-domain"
 )
 
 var (

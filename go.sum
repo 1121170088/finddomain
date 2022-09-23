@@ -1,5 +1,5 @@
-github.com/1121170088/find-domain v0.0.0-20220923085959-404dbd5f309d h1:f0GR5cNOr0i9PLWYt92xW2VB1WEWfkjo5Na7IQdpDFg=
-github.com/1121170088/find-domain v0.0.0-20220923085959-404dbd5f309d/go.mod h1:50FcFQTz/1qd43rip9wfH1q38la17yH+KhJPzFj+pBk=
+github.com/1121170088/find-domain v1.0.0 h1:12fCRQaHnkQoWGztvRVpumHCx7/OCpecYSvpMz67dYU=
+github.com/1121170088/find-domain v1.0.0/go.mod h1:50FcFQTz/1qd43rip9wfH1q38la17yH+KhJPzFj+pBk=
 github.com/babolivier/go-doh-client v0.0.0-20201028162107-a76cff4cb8b6 h1:4NNbNM2Iq/k57qEu7WfL67UrbPq1uFWxW4qODCohi+0=
 github.com/babolivier/go-doh-client v0.0.0-20201028162107-a76cff4cb8b6/go.mod h1:J29hk+f9lJrblVIfiJOtTFk+OblBawmib4uz/VdKzlg=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
